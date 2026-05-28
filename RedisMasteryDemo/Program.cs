@@ -1,4 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using RedisMasteryDemo.Interfaces;
+using RedisMasteryDemo.Models;
+using RedisMasteryDemo.Repositories;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +17,13 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 });
 
 builder.Services.AddSingleton<RedisService>();
+builder.Services.AddSingleton<ProductRepository>(); 
+builder.Services.AddScoped<IProductRepository>(sp =>
+{
+    var innerRepo = sp.GetRequiredService<ProductRepository>();
+    var redisService = sp.GetRequiredService<RedisService>();
+    return new CachedProductRepository(innerRepo, redisService);
+});
 
 var app = builder.Build();
 
@@ -78,5 +88,21 @@ app.MapPost("/leaderboard", async ([FromBody] LeaderboardEntry entry) =>
 
 app.MapGet("/leaderboard", async () =>
     Results.Ok(await redisService.GetTopFromSortedSetAsync("leaderboard:scores", 10)));
+
+// Product Endpoints
+app.MapGet("/products", async (IProductRepository repo) =>
+    Results.Ok(await repo.GetAllAsync()));
+
+app.MapGet("/products/{id}", async (int id, IProductRepository repo) =>
+{
+    var product = await repo.GetByIdAsync(id);
+    return product != null ? Results.Ok(product) : Results.NotFound();
+});
+
+app.MapPost("/products", async (Product product, IProductRepository repo) =>
+{
+    await repo.AddAsync(product);
+    return Results.Created($"/products/{product.Id}", product);
+});
 
 app.Run();

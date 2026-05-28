@@ -1,6 +1,8 @@
 @RedisMasteryDemo_HostAddress = http://localhost:5193
 
-GET {{RedisMasteryDemo_HostAddress}}/weatherforecast/
-Accept: application/json
+
+
+GET {{RedisMasteryDemo_HostAddress}}/products
+Content-Type: application/json
 
 ###

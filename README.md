@@ -30,3 +30,10 @@ A professional sample project demonstrating full mastery of Redis in ASP.NET Cor
 * Set Operations
 * Hash Operations
 * Sorted Set (Leaderboard)
+
+## Day 3: Basic Caching and Cache-Aside Pattern
+
+* Repository Pattern implementation
+* Cache-Aside Pattern with Redis
+* Cached Repository
+* Cache invalidation on data changes
