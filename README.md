@@ -69,3 +69,11 @@ A professional sample project demonstrating full mastery of Redis in ASP.NET Cor
 * Managing channels
 * Professional `RedisPubSubService`
 * Use cases in notifications and chat systems
+
+## Day 8: Transactions, Pipelining, and Batch Operations
+
+* Redis Transactions (Atomic Operations)
+* Pipelining for reducing network latency
+* Batch Operations
+* Performance comparison benchmark
+* Optimization best practices

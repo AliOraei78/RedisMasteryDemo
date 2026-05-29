@@ -30,6 +30,7 @@ builder.Services.AddSingleton<RedisService>();
 builder.Services.AddSingleton<RateLimitingService>();
 builder.Services.AddSingleton<DistributedCacheService>();
 builder.Services.AddSingleton<RedisPubSubService>();
+builder.Services.AddSingleton<RedisOptimizationService>();
 
 builder.Services.AddStackExchangeRedisCache(options =>
 {
@@ -56,6 +57,7 @@ var app = builder.Build();
 app.UseMiddleware<RateLimitingMiddleware>();
 app.UseSession();
 var distributedCache = app.Services.GetRequiredService<DistributedCacheService>();
+var optimizationService = app.Services.GetRequiredService<RedisOptimizationService>();
 
 app.MapGet("/redis-health", async (IConnectionMultiplexer redis) =>
 {
@@ -289,5 +291,55 @@ app.MapPost("/pubsub/notify",
 
         return Results.Ok("Notification published.");
     });
+
+// Transaction
+app.MapPost(
+    "/optimization/transaction/{id}",
+    async (
+        int id,
+        [FromBody] Product product,
+        RedisOptimizationService service
+    ) =>
+    {
+        product.Id = id;
+
+        var success = await service.UpdateProductWithTransactionAsync(product);
+
+        return Results.Ok(new
+        {
+            success,
+            message = "Transaction completed successfully"
+        });
+    }
+);
+
+// Pipelining
+app.MapGet(
+    "/optimization/pipeline",
+    async (RedisOptimizationService service) =>
+    {
+        var keys = new List<string>
+        {
+            "product:1",
+            "product:2",
+            "product:3"
+        };
+
+        var values = await service.GetMultipleStringsWithPipelineAsync(keys);
+
+        return Results.Ok(values);
+    }
+);
+
+// Benchmark
+app.MapGet(
+    "/optimization/benchmark",
+    async (RedisOptimizationService service) =>
+    {
+        var result = await service.BenchmarkAsync();
+
+        return Results.Ok(result);
+    }
+);
 
 app.Run();

@@ -250,3 +250,37 @@ Content-Type: application/json
   "sender": "User456",
   "content": "Did you see that amazing goal in the last minute?"
 }
+###
+
+### =================================================================
+### REDIS OPTIMIZATION ENDPOINTS
+### =================================================================
+
+### --- Execute Redis Transaction (Multi/Exec) ---
+
+# Update product data safely inside a Redis Transaction
+# '10' is passed via Route ({id}) and injected into the product object
+POST {{RedisMasteryDemo_HostAddress}}/optimization/transaction/10
+Content-Type: application/json
+
+{
+  "name": "ASUS ROG Gaming Laptop",
+  "description": "High-end gaming laptop with RTX 4080",
+  "price": 2450.00,
+  "stock": 15,
+  "createdAt": "2026-05-29T20:00:00Z"
+}
+
+
+### --- Test Redis Pipelining ---
+
+# Fetch multiple keys ("product:1", "product:2", "product:3") in a single network round-trip using Pipelining
+GET {{RedisMasteryDemo_HostAddress}}/optimization/pipeline
+Content-Type: application/json
+
+
+### --- Run Performance Benchmark ---
+
+# Trigger a benchmark test to compare performance operations
+GET {{RedisMasteryDemo_HostAddress}}/optimization/benchmark
+Content-Type: application/json
