@@ -27,7 +27,7 @@ builder.Services.AddSession(options =>
 builder.Services.AddDistributedMemoryCache();
 
 builder.Services.AddSingleton<RedisService>();
-
+builder.Services.AddSingleton<RateLimitingService>();
 builder.Services.AddSingleton<DistributedCacheService>();
 
 builder.Services.AddStackExchangeRedisCache(options =>
@@ -51,6 +51,8 @@ builder.Services.AddSession(options =>
 
 var app = builder.Build();
 
+// Rate Limiting Middleware
+app.UseMiddleware<RateLimitingMiddleware>();
 app.UseSession();
 var distributedCache = app.Services.GetRequiredService<DistributedCacheService>();
 
@@ -209,6 +211,22 @@ app.MapPost("/session/clear", (HttpContext context) =>
     context.Session.Clear();
 
     return Results.Ok("Session has been cleared.");
+});
+
+app.MapGet("/ratelimit/test", () =>
+{
+    return Results.Ok(new
+    {
+        message = "Request received successfully.",
+        time = DateTime.Now
+    });
+});
+
+app.MapGet("/ratelimit/status", async (RateLimitingService rateService) =>
+{
+    string clientKey = "test-client";
+    var remaining = await rateService.GetRemainingTokensAsync(clientKey);
+    return Results.Ok(new { clientKey, remainingTokens = remaining });
 });
 
 app.Run();

@@ -221,3 +221,13 @@ Content-Type: application/json
 # Completely clear all data from the active Session
 POST {{RedisMasteryDemo_HostAddress}}/session/clear
 Content-Type: application/json
+
+###
+
+GET {{RedisMasteryDemo_HostAddress}}/ratelimit/test
+Content-Type: application/json
+
+###
+
+GET {{RedisMasteryDemo_HostAddress}}/ratelimit/status
+Content-Type: application/json

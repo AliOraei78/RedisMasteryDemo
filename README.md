@@ -54,3 +54,10 @@ A professional sample project demonstrating full mastery of Redis in ASP.NET Cor
 * Managing Session timeout
 * Cookie security
 * Custom Session Store (ready for extension)
+
+## Day 6: Rate Limiting with Redis (Token Bucket)
+
+* Implementing the Token Bucket algorithm
+* Building a Rate Limiter with Lua Script (Atomic operations)
+* Custom middleware
+* Protecting APIs against abuse
