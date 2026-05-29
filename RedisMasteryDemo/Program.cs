@@ -16,6 +16,16 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     return ConnectionMultiplexer.Connect(config);
 });
 
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(20);        // Session expiration
+    options.Cookie.HttpOnly = true;                        // Security
+    options.Cookie.IsEssential = true;                     // GDPR compliance
+    options.Cookie.SameSite = SameSiteMode.Strict;
+});
+
+builder.Services.AddDistributedMemoryCache();
+
 builder.Services.AddSingleton<RedisService>();
 
 builder.Services.AddSingleton<DistributedCacheService>();
@@ -34,8 +44,14 @@ builder.Services.AddScoped<IProductRepository>(sp =>
     return new CachedProductRepository(innerRepo, redisService);
 });
 
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(20);
+});
+
 var app = builder.Build();
 
+app.UseSession();
 var distributedCache = app.Services.GetRequiredService<DistributedCacheService>();
 
 app.MapGet("/redis-health", async (IConnectionMultiplexer redis) =>
@@ -149,6 +165,50 @@ app.MapDelete("/distributed/{key}", async (string key, DistributedCacheService c
 {
     await cacheService.RemoveAsync(key);
     return Results.Ok($"Key '{key}' has been removed from the Cache.");
+});
+
+// ====================== Session Management Endpoints ======================
+
+app.MapPost("/session/set", async (HttpContext context, [FromBody] Dictionary<string, string> data) =>
+{
+    foreach (var item in data)
+    {
+        context.Session.SetString(item.Key, item.Value);
+    }
+
+    return Results.Ok("Data has been stored in the Session.");
+});
+
+app.MapGet("/session/get/{key}", (HttpContext context, string key) =>
+{
+    var value = context.Session.GetString(key);
+
+    return Results.Ok(new
+    {
+        key,
+        value,
+        sessionId = context.Session.Id
+    });
+});
+
+app.MapGet("/session/all", (HttpContext context) =>
+{
+    var sessionData = new Dictionary<string, string>();
+
+    // Note: In Minimal API, Session does not directly expose all keys
+    // For demonstration purposes, we show only sample information
+    return Results.Ok(new
+    {
+        sessionId = context.Session.Id,
+        message = "Use Redis Insight to view all stored values."
+    });
+});
+
+app.MapPost("/session/clear", (HttpContext context) =>
+{
+    context.Session.Clear();
+
+    return Results.Ok("Session has been cleared.");
 });
 
 app.Run();

@@ -46,3 +46,11 @@ A professional sample project demonstrating full mastery of Redis in ASP.NET Cor
 * Absolute expiration
 * Sliding expiration
 * Best practices for cache management
+
+## Day 5: Session Management with Redis
+
+* Configuring Distributed Session
+* Storing and retrieving Session data in Redis
+* Managing Session timeout
+* Cookie security
+* Custom Session Store (ready for extension)

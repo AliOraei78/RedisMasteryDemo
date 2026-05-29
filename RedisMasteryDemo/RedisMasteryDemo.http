@@ -185,3 +185,39 @@ Content-Type: application/json
 # Remove a specific key from the Distributed Cache
 DELETE {{RedisMasteryDemo_HostAddress}}/distributed/distributed:product:4
 Content-Type: application/json
+
+###
+### =================================================================
+### SESSION MANAGEMENT ENDPOINTS
+### =================================================================
+
+### --- Set Session Data ---
+
+# Store user data in the current Session
+POST {{RedisMasteryDemo_HostAddress}}/session/set
+Content-Type: application/json
+
+{
+  "UserRole": "Joh Joe",
+  "Preferences": "DarkMode",
+  "CartCount": "5"
+}
+
+### --- Get Specific Session Key ---
+
+# Retrieve a specific key from the active Session 
+# (Note: Ensure the cookie from the POST request is preserved)
+GET {{RedisMasteryDemo_HostAddress}}/session/get/UserRole
+Content-Type: application/json
+
+### --- Get Session Information ---
+
+# Get general information about the active Session (ID and tips)
+GET {{RedisMasteryDemo_HostAddress}}/session/all
+Content-Type: application/json
+
+### --- Clear Session ---
+
+# Completely clear all data from the active Session
+POST {{RedisMasteryDemo_HostAddress}}/session/clear
+Content-Type: application/json
