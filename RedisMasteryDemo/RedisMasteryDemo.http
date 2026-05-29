@@ -1,8 +1,187 @@
 @RedisMasteryDemo_HostAddress = http://localhost:5193
 
+### =================================================================
+### REDIS HEALTH CHECK
+### =================================================================
+
+# Check if Redis connection is healthy
+GET {{RedisMasteryDemo_HostAddress}}/redis-health
+Content-Type: application/json
+
+### =================================================================
+### NATIVE REDIS OPERATIONS (RedisService)
+### =================================================================
+
+### --- String Operations ---
+
+# Set a native string value (Key is passed via Route, Value via Body)
+POST {{RedisMasteryDemo_HostAddress}}/string/myNativeKey
+Content-Type: application/json
+
+"Hello Redis from native string operations!"
+
+###
+# Get the native string value
+GET {{RedisMasteryDemo_HostAddress}}/string/myNativeKey
+Content-Type: application/json
 
 
+### --- List Operations ---
+
+# Push item to list (First item)
+POST {{RedisMasteryDemo_HostAddress}}/list/myListKey
+Content-Type: application/json
+
+"Item 1"
+
+###
+# Push another item to list (Second item)
+POST {{RedisMasteryDemo_HostAddress}}/list/myListKey
+Content-Type: application/json
+
+"Item 2"
+
+###
+# Get all items from the list
+GET {{RedisMasteryDemo_HostAddress}}/list/myListKey
+Content-Type: application/json
+
+
+### --- Set Operations ---
+
+# Add item to Set
+POST {{RedisMasteryDemo_HostAddress}}/set/mySetKey
+Content-Type: application/json
+
+"UniqueMember1"
+
+###
+# Add duplicate item to Set (Redis will handle uniqueness)
+POST {{RedisMasteryDemo_HostAddress}}/set/mySetKey
+Content-Type: application/json
+
+"UniqueMember1"
+
+###
+# Get all members of the Set
+GET {{RedisMasteryDemo_HostAddress}}/set/mySetKey
+Content-Type: application/json
+
+
+### --- Hash Operations ---
+
+# Save fields and values to a Hash
+POST {{RedisMasteryDemo_HostAddress}}/hash/user:100
+Content-Type: application/json
+
+{
+  "Username": "john_doe",
+  "Email": "john@example.com",
+  "Role": "Admin"
+}
+
+###
+# Get all fields and values from the Hash
+GET {{RedisMasteryDemo_HostAddress}}/hash/user:100
+Content-Type: application/json
+
+
+### --- Leaderboard Operations (Sorted Set) ---
+
+# Submit user score to leaderboard
+POST {{RedisMasteryDemo_HostAddress}}/leaderboard
+Content-Type: application/json
+
+{
+  "UserName": "Alice",
+  "Score": 4500
+}
+
+###
+# Submit another user score to leaderboard
+POST {{RedisMasteryDemo_HostAddress}}/leaderboard
+Content-Type: application/json
+
+{
+  "UserName": "Bob",
+  "Score": 5200
+}
+
+###
+# Get top 10 users from leaderboard sorted by score
+GET {{RedisMasteryDemo_HostAddress}}/leaderboard
+Content-Type: application/json
+
+
+### =================================================================
+### PRODUCT REPOSITORY OPERATIONS (CachedProductRepository)
+### =================================================================
+
+# Create a new product (Will be saved via repository)
+POST {{RedisMasteryDemo_HostAddress}}/products
+Content-Type: application/json
+
+{
+  "id": 1,
+  "name": "Logitech G Pro Mouse",
+  "description": "Wireless Gaming Mouse",
+  "price": 129.99,
+  "stock": 45,
+  "createdAt": "2026-05-29T14:00:00Z"
+}
+
+###
+# Get all products
 GET {{RedisMasteryDemo_HostAddress}}/products
 Content-Type: application/json
 
 ###
+# Get product by ID (This invokes the caching logic inside CachedProductRepository)
+GET {{RedisMasteryDemo_HostAddress}}/products/1
+Content-Type: application/json
+
+
+### =================================================================
+### DISTRIBUTED CACHE OPERATIONS (DistributedCacheService)
+### =================================================================
+
+### --- Distributed String Operations ---
+
+# Set a string value in Distributed Cache
+POST {{RedisMasteryDemo_HostAddress}}/distributed/string/testkey
+Content-Type: application/json
+
+"This is a Distributed Cache test string"
+
+###
+# Get the string value from Distributed Cache
+GET {{RedisMasteryDemo_HostAddress}}/distributed/string/testkey
+Content-Type: application/json
+
+
+### --- Distributed Object Operations (Product) ---
+
+# Save complex Product object with Absolute and Sliding expiration
+POST {{RedisMasteryDemo_HostAddress}}/distributed/product
+Content-Type: application/json
+
+{
+  "id": 4,
+  "name": "HP Headphones",
+  "description": "Noise-cancelling over-ear headphones",
+  "price": 44500000,
+  "stock": 30,
+  "createdAt": "2026-05-29T11:36:19.7242338Z"
+}
+
+###
+# Get the Product object from Distributed Cache
+GET {{RedisMasteryDemo_HostAddress}}/distributed/product/4
+Content-Type: application/json
+
+
+### --- Distributed Cache Removal ---
+
+# Remove a specific key from the Distributed Cache
+DELETE {{RedisMasteryDemo_HostAddress}}/distributed/distributed:product:4
+Content-Type: application/json

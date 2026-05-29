@@ -37,3 +37,12 @@ A professional sample project demonstrating full mastery of Redis in ASP.NET Cor
 * Cache-Aside Pattern with Redis
 * Cached Repository
 * Cache invalidation on data changes
+
+## Day 4: Distributed Cache with `IDistributedCache`
+
+* Configuring `AddStackExchangeRedisCache`
+* Implementing `DistributedCacheService`
+* Supporting JSON serialization
+* Absolute expiration
+* Sliding expiration
+* Best practices for cache management

@@ -17,6 +17,15 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 });
 
 builder.Services.AddSingleton<RedisService>();
+
+builder.Services.AddSingleton<DistributedCacheService>();
+
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = "RedisMasteryDemo_";
+});
+
 builder.Services.AddSingleton<ProductRepository>(); 
 builder.Services.AddScoped<IProductRepository>(sp =>
 {
@@ -26,6 +35,8 @@ builder.Services.AddScoped<IProductRepository>(sp =>
 });
 
 var app = builder.Build();
+
+var distributedCache = app.Services.GetRequiredService<DistributedCacheService>();
 
 app.MapGet("/redis-health", async (IConnectionMultiplexer redis) =>
 {
@@ -103,6 +114,41 @@ app.MapPost("/products", async (Product product, IProductRepository repo) =>
 {
     await repo.AddAsync(product);
     return Results.Created($"/products/{product.Id}", product);
+});
+
+// ====================== Distributed Cache Endpoints ======================
+
+app.MapPost("/distributed/string/{key}", async (string key, [FromBody] string value, DistributedCacheService cacheService) =>
+{
+    await cacheService.SetAsync(key, value, TimeSpan.FromMinutes(10));
+    return Results.Ok($"Value with key '{key}' has been saved in the Distributed Cache.");
+});
+
+app.MapGet("/distributed/string/{key}", async (string key, DistributedCacheService cacheService) =>
+{
+    var value = await cacheService.GetAsync<string>(key);
+    return Results.Ok(new { key, value });
+});
+
+app.MapPost("/distributed/product", async ([FromBody] Product product, DistributedCacheService cacheService) =>
+{
+    await cacheService.SetAsync($"product:{product.Id}", product,
+        absoluteExpiration: TimeSpan.FromMinutes(15),
+        slidingExpiration: TimeSpan.FromMinutes(5));
+
+    return Results.Ok($"Product {product.Id} has been saved with Absolute and Sliding Expiration.");
+});
+
+app.MapGet("/distributed/product/{id}", async (int id, DistributedCacheService cacheService) =>
+{
+    var product = await cacheService.GetAsync<Product>($"product:{id}");
+    return product != null ? Results.Ok(product) : Results.NotFound();
+});
+
+app.MapDelete("/distributed/{key}", async (string key, DistributedCacheService cacheService) =>
+{
+    await cacheService.RemoveAsync(key);
+    return Results.Ok($"Key '{key}' has been removed from the Cache.");
 });
 
 app.Run();
