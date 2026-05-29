@@ -29,6 +29,7 @@ builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSingleton<RedisService>();
 builder.Services.AddSingleton<RateLimitingService>();
 builder.Services.AddSingleton<DistributedCacheService>();
+builder.Services.AddSingleton<RedisPubSubService>();
 
 builder.Services.AddStackExchangeRedisCache(options =>
 {
@@ -228,5 +229,65 @@ app.MapGet("/ratelimit/status", async (RateLimitingService rateService) =>
     var remaining = await rateService.GetRemainingTokensAsync(clientKey);
     return Results.Ok(new { clientKey, remainingTokens = remaining });
 });
+
+var pubSubService = app.Services.GetRequiredService<RedisPubSubService>();
+
+// ====================== Pub/Sub Endpoints ======================
+
+// Publish message
+app.MapPost("/pubsub/publish/{channel}",
+    async (
+        string channel,
+        [FromBody] Message message,
+        RedisPubSubService service) =>
+    {
+        message.Channel = channel;
+        message.Timestamp = DateTime.UtcNow;
+
+        await service.PublishAsync(channel, message);
+
+        return Results.Ok(new
+        {
+            status = "Message published",
+            channel,
+            messageId = message.Id
+        });
+    });
+
+// Subscribe (for testing - logs to console)
+app.MapGet("/pubsub/subscribe/{channel}",
+    (string channel, RedisPubSubService service) =>
+    {
+        service.Subscribe(channel, message =>
+        {
+            Console.WriteLine(
+                $"📨 New message received in channel '{channel}':");
+
+            Console.WriteLine(
+                $"From: {message.Sender} | Content: {message.Content}");
+
+            Console.WriteLine(
+                $"Time: {message.Timestamp}");
+        });
+
+        return Results.Ok(
+            $"Subscribed to channel: {channel}. Messages will appear in the Output Window.");
+    });
+
+// Send test message to notifications channel
+app.MapPost("/pubsub/notify",
+    async (RedisPubSubService service) =>
+    {
+        var message = new Message
+        {
+            Sender = "System",
+            Content = "New notification: A new product has been added to the store!",
+            Channel = "notifications"
+        };
+
+        await service.PublishAsync("notifications", message);
+
+        return Results.Ok("Notification published.");
+    });
 
 app.Run();

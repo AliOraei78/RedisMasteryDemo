@@ -61,3 +61,11 @@ A professional sample project demonstrating full mastery of Redis in ASP.NET Cor
 * Building a Rate Limiter with Lua Script (Atomic operations)
 * Custom middleware
 * Protecting APIs against abuse
+
+## Day 7: Pub/Sub and Messaging with Redis
+
+* Implementing Redis Publish/Subscribe
+* Sending and receiving real-time messages
+* Managing channels
+* Professional `RedisPubSubService`
+* Use cases in notifications and chat systems

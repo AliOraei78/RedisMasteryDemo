@@ -231,3 +231,22 @@ Content-Type: application/json
 
 GET {{RedisMasteryDemo_HostAddress}}/ratelimit/status
 Content-Type: application/json
+
+###
+
+GET {{RedisMasteryDemo_HostAddress}}/pubsub/subscribe/RedisChannel
+Content-Type: application/json
+
+###
+
+POST {{RedisMasteryDemo_HostAddress}}/pubsub/notify
+Content-Type: application/json
+###
+
+POST {{RedisMasteryDemo_HostAddress}}/pubsub/publish/RedisChannel
+Content-Type: application/json
+
+{
+  "sender": "User456",
+  "content": "Did you see that amazing goal in the last minute?"
+}
