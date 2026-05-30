@@ -77,3 +77,19 @@ A professional sample project demonstrating full mastery of Redis in ASP.NET Cor
 * Batch Operations
 * Performance comparison benchmark
 * Optimization best practices
+
+## Day 9: Advanced Configuration, Resilience, and Connection Management
+
+- Professional ConfigurationOptions
+- Polly Retry Policy
+- Resilience Wrapper
+- Advanced Health Checks
+- Production Best Practices
+
+## Day 10: Security, Monitoring, Logging, and Testing
+
+* Redis security best practices
+* Monitoring with RedisInsight
+* Advanced operation logging
+* Unit testing
+* Comprehensive and professional health checks

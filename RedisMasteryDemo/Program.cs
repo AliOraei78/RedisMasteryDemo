@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using RedisMasteryDemo.Interfaces;
 using RedisMasteryDemo.Models;
 using RedisMasteryDemo.Repositories;
@@ -6,14 +8,26 @@ using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSingleton<RedisConfigurationService>();
+builder.Services.AddSingleton<RedisConfigurationService>();
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
-    var config = ConfigurationOptions.Parse(
-        builder.Configuration.GetConnectionString("Redis")!, true);
-    config.AbortOnConnectFail = false;
-    config.ConnectTimeout = 10000;
-    config.SyncTimeout = 10000;
-    return ConnectionMultiplexer.Connect(config);
+    var configService = sp.GetRequiredService<RedisConfigurationService>();
+    var options = configService.GetConfigurationOptions();
+
+    // Create the connection multiplexer
+    options.AllowAdmin = false;
+    var multiplexer = ConnectionMultiplexer.Connect(options);
+
+    // // Subscribe to the configuration changed event
+    multiplexer.ConfigurationChanged += (sender, args) =>
+    {
+        // Get the logger directly from ServiceProvider
+        var logger = sp.GetRequiredService<ILogger<RedisConfigurationService>>();
+        logger.LogInformation($"Redis Configuration Changed. New Endpoint: {args.EndPoint}");
+    };
+
+    return multiplexer;
 });
 
 builder.Services.AddSession(options =>
@@ -27,10 +41,12 @@ builder.Services.AddSession(options =>
 builder.Services.AddDistributedMemoryCache();
 
 builder.Services.AddSingleton<RedisService>();
-builder.Services.AddSingleton<RateLimitingService>();
 builder.Services.AddSingleton<DistributedCacheService>();
 builder.Services.AddSingleton<RedisPubSubService>();
+builder.Services.AddSingleton<RateLimitingService>();
 builder.Services.AddSingleton<RedisOptimizationService>();
+builder.Services.AddSingleton<RedisResilientService>();
+builder.Services.AddSingleton<RedisLoggingService>();
 
 builder.Services.AddStackExchangeRedisCache(options =>
 {
@@ -50,6 +66,9 @@ builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(20);
 });
+
+builder.Services.AddHealthChecks()
+    .AddRedis(builder.Configuration.GetConnectionString("Redis")!, name: "redis", failureStatus: HealthStatus.Degraded);
 
 var app = builder.Build();
 
@@ -341,5 +360,39 @@ app.MapGet(
         return Results.Ok(result);
     }
 );
+
+// Advanced Health Check
+app.MapHealthChecks("/health/redis");
+
+app.MapGet("/resilience/test", async (RedisResilientService resilientService) =>
+{
+    await resilientService.ExecuteWithResilienceAsync(async db =>
+    {
+        await db.StringSetAsync("resilience:test", "This is a resilient operation");
+    });
+
+    return Results.Ok("The operation was completed successfully using the Resilience Policy");
+});
+
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    Predicate = _ => true,
+    ResponseWriter = async (context, report) =>
+    {
+        var result = new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(e => new
+            {
+                name = e.Key,
+                status = e.Value.Status.ToString(),
+                description = e.Value.Description
+            })
+        };
+
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(result);
+    }
+});
 
 app.Run();

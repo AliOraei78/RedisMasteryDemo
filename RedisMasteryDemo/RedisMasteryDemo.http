@@ -284,3 +284,13 @@ Content-Type: application/json
 # Trigger a benchmark test to compare performance operations
 GET {{RedisMasteryDemo_HostAddress}}/optimization/benchmark
 Content-Type: application/json
+
+### --- Health check ---
+
+GET {{RedisMasteryDemo_HostAddress}}/health/redis
+Content-Type: application/json
+
+###
+
+GET {{RedisMasteryDemo_HostAddress}}/resilience/test
+Content-Type: application/json
